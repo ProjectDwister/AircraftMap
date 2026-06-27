@@ -528,7 +528,6 @@
         <select id="mapViewSelect" onchange="changeMapView()">
           <option value="Dark View">Dark View</option>
           <option value="Standard View">Standard View</option>
-          <option value="Light View">Light View</option>
           <option value="Satellite View">Satellite View</option>
         </select>
 
@@ -602,14 +601,6 @@
         {
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap contributors'
-        }
-      ),
-
-      'Light View': L.tileLayer(
-        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
         }
       ),
 
