@@ -342,21 +342,52 @@
     }
 
     .aircraft-marker {
-      border-radius: 999px;
-      padding: 5px 8px;
-      font-size: 13px;
-      font-weight: 850;
-      box-shadow: 0 1px 12px rgba(0,0,0,.42);
-      white-space: nowrap;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
       color: white;
-      border: 1px solid rgba(255,255,255,.18);
+      text-align: center;
+      white-space: nowrap;
+      filter: drop-shadow(0 8px 14px rgba(0,0,0,.45));
     }
 
-    .marker-live { background: var(--blue); animation: pulse 1.8s infinite; }
-    .marker-ground { background: var(--green); }
-    .marker-landed { background: var(--orange); }
-    .marker-lost { background: var(--red); }
-    .marker-none { background: var(--grey); }
+    .aircraft-symbol-wrap {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.25);
+      box-shadow: 0 1px 16px rgba(0,0,0,.48);
+      backdrop-filter: blur(8px);
+    }
+
+    .aircraft-symbol {
+      display: inline-block;
+      font-size: 20px;
+      line-height: 1;
+      transform-origin: center center;
+      will-change: transform;
+      text-shadow: 0 1px 3px rgba(0,0,0,.5);
+    }
+
+    .aircraft-tail-label {
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .02em;
+      background: rgba(2, 6, 23, .82);
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 3px 10px rgba(0,0,0,.28);
+    }
+
+    .marker-live .aircraft-symbol-wrap { background: var(--blue); animation: pulse 1.8s infinite; }
+    .marker-ground .aircraft-symbol-wrap { background: var(--green); }
+    .marker-landed .aircraft-symbol-wrap { background: var(--orange); }
+    .marker-lost .aircraft-symbol-wrap { background: var(--red); opacity: .9; }
+    .marker-none .aircraft-symbol-wrap { background: var(--grey); opacity: .75; }
 
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(56,189,248,.55), 0 1px 12px rgba(0,0,0,.42); }
@@ -558,13 +589,19 @@
       return 'marker-none';
     }
 
-    function markerSymbol(ac) {
-      const s = statusKey(ac);
-      if (s === 'LIVE_AIRBORNE') return '✈';
-      if (s === 'ON_GROUND') return '●';
-      if (s === 'LIKELY_LANDED') return '◆';
-      if (s === 'SIGNAL_LOST') return '●';
-      return '○';
+    function aircraftCategoryIcon(ac) {
+      const category = String(ac.category || '').toLowerCase();
+      const type = String(ac.type || '').toLowerCase();
+
+      if (category.includes('helicopter') || type.includes('heli')) return '🚁';
+      if (category.includes('turboprop') || type.includes('turbo') || type.includes('king air') || type.includes('pc-12')) return '🛩';
+      return '✈';
+    }
+
+    function aircraftTrackDegrees(ac) {
+      const track = Number(ac.track);
+      if (!Number.isFinite(track)) return 0;
+      return ((track % 360) + 360) % 360;
     }
 
     function updateStats(data) {
@@ -716,11 +753,21 @@
     }
 
     function aircraftIcon(ac) {
+      const icon = aircraftCategoryIcon(ac);
+      const rotation = aircraftTrackDegrees(ac);
+
       return L.divIcon({
-        html: `<div class="aircraft-marker ${markerClass(ac)}">${markerSymbol(ac)} ${escapeHtml(ac.tail)}</div>`,
+        html: `
+          <div class="aircraft-marker ${markerClass(ac)}">
+            <div class="aircraft-symbol-wrap">
+              <span class="aircraft-symbol" style="transform: rotate(${rotation}deg);">${icon}</span>
+            </div>
+            <div class="aircraft-tail-label">${escapeHtml(ac.tail)}</div>
+          </div>
+        `,
         className: '',
-        iconSize: [116, 30],
-        iconAnchor: [58, 15]
+        iconSize: [74, 58],
+        iconAnchor: [37, 29]
       });
     }
 
