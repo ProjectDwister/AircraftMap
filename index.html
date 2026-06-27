@@ -1,68 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8">
   <title>Tycoon Flight Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link rel="preconnect" href="https://unpkg.com">
-  <link rel="preconnect" href="https://a.basemaps.cartocdn.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
     :root {
       --bg: #020617;
-      --panel: rgba(15, 23, 42, 0.92);
-      --panel-strong: rgba(17, 24, 39, 0.98);
-      --panel-soft: rgba(30, 41, 59, 0.72);
+      --panel: rgba(15, 23, 42, 0.94);
+      --panel-2: rgba(30, 41, 59, 0.86);
       --border: rgba(148, 163, 184, 0.18);
       --text: #e5e7eb;
       --muted: #94a3b8;
-      --faint: #64748b;
       --blue: #38bdf8;
-      --blue-strong: #1d4ed8;
-      --red: #fb7185;
-      --amber: #f59e0b;
       --green: #22c55e;
-      --white: #ffffff;
-      --shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
-      --radius: 18px;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --grey: #64748b;
     }
-
-    * { box-sizing: border-box; }
 
     html, body {
       height: 100%;
       margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-    }
-
-    body {
-      overflow: hidden;
     }
 
     #app {
       height: 100%;
       display: grid;
-      grid-template-columns: 400px 1fr;
-      background:
-        radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.16), transparent 32%),
-        radial-gradient(circle at 80% 15%, rgba(14, 165, 233, 0.09), transparent 28%),
-        radial-gradient(circle at 70% 85%, rgba(244, 63, 94, 0.08), transparent 30%),
-        #020617;
+      grid-template-columns: 390px 1fr;
+      background: radial-gradient(circle at top left, rgba(56,189,248,.16), transparent 34%), var(--bg);
     }
 
     #sidebar {
-      min-width: 0;
-      padding: 18px;
+      padding: 16px;
       overflow-y: auto;
+      background: linear-gradient(180deg, rgba(2,6,23,.98), rgba(15,23,42,.96));
       border-right: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(2, 6, 23, 0.98), rgba(15, 23, 42, 0.96));
-      box-shadow: var(--shadow);
-      z-index: 1001;
+      box-shadow: 10px 0 40px rgba(0,0,0,.24);
+      z-index: 900;
     }
 
     #map {
@@ -71,87 +53,83 @@
       background: #020617;
     }
 
-    .brand {
+    .brand-row {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 16px;
+      gap: 10px;
+      margin-bottom: 6px;
     }
 
-    .brand h1 {
+    h1 {
       margin: 0;
-      font-size: 24px;
-      line-height: 1.05;
-      letter-spacing: -0.04em;
-      color: #f8fafc;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
     }
 
-    .brand-subtitle {
-      margin-top: 6px;
+    .subtext {
       color: var(--muted);
       font-size: 12px;
+      margin-bottom: 12px;
       line-height: 1.4;
     }
 
-    .live-badge {
-      flex: 0 0 auto;
+    .live-dot {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 7px 9px;
-      border-radius: 999px;
-      background: rgba(34, 197, 94, 0.12);
-      border: 1px solid rgba(34, 197, 94, 0.26);
-      color: #86efac;
+      gap: 6px;
       font-size: 11px;
+      color: #bfdbfe;
+      border: 1px solid rgba(56,189,248,.25);
+      background: rgba(14,165,233,.10);
+      border-radius: 999px;
+      padding: 5px 8px;
       white-space: nowrap;
     }
 
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--green);
-      box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.12);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .stat-card {
-      padding: 12px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.64));
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
-    }
-
-    .stat-value {
-      font-size: 22px;
-      font-weight: 760;
-      letter-spacing: -0.04em;
-      color: #f8fafc;
-    }
-
-    .stat-label {
-      margin-top: 3px;
-      color: var(--muted);
-      font-size: 11px;
+    .live-dot::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 0 5px rgba(56,189,248,.10);
     }
 
     .panel {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 16px;
       padding: 12px;
       margin-bottom: 12px;
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
-      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 30px rgba(0,0,0,.22);
+      backdrop-filter: blur(12px);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .stat {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 10px;
+    }
+
+    .stat .num {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
     }
 
     .controls {
@@ -161,38 +139,58 @@
     }
 
     button {
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,.9);
       color: var(--text);
-      border-radius: 12px;
-      padding: 9px 11px;
+      border-radius: 10px;
+      padding: 8px 10px;
       cursor: pointer;
       font-weight: 650;
-      font-size: 12px;
-      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
     }
 
     button:hover {
-      background: rgba(30, 41, 59, 0.96);
-      border-color: rgba(56, 189, 248, 0.46);
-      transform: translateY(-1px);
+      background: rgba(51,65,85,.85);
     }
 
-    .primary-button {
-      background: linear-gradient(135deg, #0284c7, #1d4ed8);
-      border-color: rgba(56, 189, 248, 0.45);
-      color: white;
+    label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin: 9px 0 5px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
     }
 
-    .meta-row {
+    select {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,.95);
+      color: var(--text);
+      outline: none;
+    }
+
+    .toggle-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .toggle {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 8px;
-      color: var(--muted);
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: rgba(15,23,42,.55);
+      color: var(--text);
       font-size: 12px;
-      margin-bottom: 12px;
     }
+
+    .toggle input { accent-color: var(--blue); }
 
     .legend-row {
       display: flex;
@@ -204,115 +202,44 @@
     }
 
     .dot {
-      width: 13px;
-      height: 13px;
+      width: 12px;
+      height: 12px;
       border-radius: 999px;
       display: inline-block;
-      box-shadow: 0 0 18px currentColor;
     }
 
-    .dot-blue { background: var(--blue); color: var(--blue); }
-    .dot-red { background: var(--red); color: var(--red); }
-
-    .filters-title {
-      color: #f8fafc;
-      font-size: 13px;
-      font-weight: 750;
-      margin-bottom: 8px;
-    }
-
-    label {
-      display: block;
-      font-size: 11px;
-      color: var(--muted);
-      margin: 9px 0 5px;
-    }
-
-    select {
-      width: 100%;
-      appearance: none;
-      padding: 10px 38px 10px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      color: var(--text);
-      background:
-        linear-gradient(45deg, transparent 50%, #94a3b8 50%) calc(100% - 18px) 50% / 7px 7px no-repeat,
-        linear-gradient(135deg, #94a3b8 50%, transparent 50%) calc(100% - 13px) 50% / 7px 7px no-repeat,
-        rgba(2, 6, 23, 0.58);
-      outline: none;
-      font-size: 13px;
-    }
-
-    select:focus {
-      border-color: rgba(56, 189, 248, 0.56);
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
-    }
-
-    .toggle-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .toggle-pill {
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      border-radius: 12px;
-      padding: 10px;
-      background: rgba(2, 6, 23, 0.45);
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 12px;
-      text-align: center;
-      user-select: none;
-    }
-
-    .toggle-pill.active {
-      color: #e0f2fe;
-      background: rgba(14, 165, 233, 0.16);
-      border-color: rgba(56, 189, 248, 0.46);
-    }
-
-    .error {
-      background: rgba(127, 29, 29, 0.54);
-      color: #fecaca;
-      border: 1px solid rgba(248, 113, 113, 0.36);
-      padding: 9px;
-      border-radius: 12px;
-      font-size: 12px;
-      margin-bottom: 12px;
-      display: none;
-      line-height: 1.4;
-    }
+    .dot-blue { background: var(--blue); box-shadow: 0 0 12px rgba(56,189,248,.7); }
+    .dot-green { background: var(--green); }
+    .dot-orange { background: var(--orange); }
+    .dot-red { background: var(--red); }
+    .dot-grey { background: var(--grey); }
 
     .aircraft-card {
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.86));
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      border-radius: 18px;
-      padding: 13px;
+      background: linear-gradient(180deg, rgba(30,41,59,.92), rgba(15,23,42,.94));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
       margin-bottom: 10px;
       cursor: pointer;
-      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+      box-shadow: 0 10px 26px rgba(0,0,0,.18);
     }
 
     .aircraft-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(56, 189, 248, 0.38);
-      background: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.92));
+      border-color: rgba(56,189,248,.45);
+      transform: translateY(-1px);
     }
 
     .card-head {
       display: flex;
-      align-items: flex-start;
       justify-content: space-between;
-      gap: 8px;
+      align-items: start;
+      gap: 10px;
     }
 
     .tail {
-      font-weight: 820;
-      font-size: 17px;
-      letter-spacing: 0.02em;
-      color: #f8fafc;
+      font-weight: 850;
+      font-size: 16px;
+      letter-spacing: .02em;
     }
 
     .meta {
@@ -322,212 +249,137 @@
       line-height: 1.35;
     }
 
-    .status {
-      flex: 0 0 auto;
+    .pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 10px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 750;
+      padding: 5px 8px;
       border-radius: 999px;
+      white-space: nowrap;
     }
 
-    .status-airborne {
-      background: rgba(14, 165, 233, 0.16);
-      color: #bae6fd;
-      border: 1px solid rgba(56, 189, 248, 0.32);
-    }
+    .pill-blue { color: #bae6fd; background: rgba(14,165,233,.14); border: 1px solid rgba(56,189,248,.3); }
+    .pill-green { color: #bbf7d0; background: rgba(34,197,94,.14); border: 1px solid rgba(34,197,94,.3); }
+    .pill-orange { color: #fed7aa; background: rgba(245,158,11,.14); border: 1px solid rgba(245,158,11,.3); }
+    .pill-red { color: #fecaca; background: rgba(239,68,68,.14); border: 1px solid rgba(239,68,68,.3); }
+    .pill-grey { color: #cbd5e1; background: rgba(100,116,139,.14); border: 1px solid rgba(100,116,139,.3); }
 
-    .status-stale {
-      background: rgba(244, 63, 94, 0.13);
-      color: #fecdd3;
-      border: 1px solid rgba(251, 113, 133, 0.32);
-    }
-
-    .metric-grid {
+    .metrics {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 12px;
+      gap: 7px;
+      margin-top: 10px;
     }
 
     .metric {
-      padding: 8px;
+      border: 1px solid var(--border);
+      background: rgba(2,6,23,.30);
       border-radius: 12px;
-      background: rgba(2, 6, 23, 0.42);
-      border: 1px solid rgba(148, 163, 184, 0.12);
+      padding: 8px;
+      min-width: 0;
     }
 
-    .metric-label {
-      color: var(--faint);
+    .metric .k {
       font-size: 10px;
+      color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.07em;
+      letter-spacing: .05em;
     }
 
-    .metric-value {
+    .metric .v {
       margin-top: 3px;
-      color: #f8fafc;
       font-size: 12px;
       font-weight: 750;
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .card-foot {
-      color: var(--muted);
+    .updated {
+      margin-top: 9px;
       font-size: 11px;
-      margin-top: 10px;
-      line-height: 1.4;
+      color: var(--muted);
     }
-
-    .freshness {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: 8px;
-      padding: 5px 7px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 750;
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      background: rgba(2, 6, 23, 0.42);
-    }
-
-    .fresh-green { color: #86efac; }
-    .fresh-amber { color: #fcd34d; }
-    .fresh-red { color: #fda4af; }
 
     .popup-title {
-      font-weight: 800;
-      font-size: 16px;
-      margin-bottom: 6px;
-      color: #0f172a;
-    }
-
-    .popup-subtitle {
-      color: #475569;
-      font-size: 12px;
-      margin-bottom: 10px;
+      font-weight: 850;
+      font-size: 15px;
+      margin-bottom: 4px;
     }
 
     .popup-body {
       font-size: 12px;
-      line-height: 1.55;
-      color: #111827;
+      line-height: 1.5;
     }
 
     .popup-section {
-      margin-top: 9px;
-      padding-top: 8px;
       border-top: 1px solid #e5e7eb;
-    }
-
-    .popup-section-title {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #64748b;
-      font-weight: 800;
-      margin-bottom: 4px;
+      margin-top: 7px;
+      padding-top: 7px;
     }
 
     .warning {
       margin-top: 8px;
       padding: 7px;
-      border-radius: 9px;
-      background: #fff7ed;
-      color: #9a3412;
+      border-radius: 8px;
+      background: #fff4e5;
+      color: #8a4b00;
       font-size: 11px;
       line-height: 1.35;
     }
 
-    .custom-marker {
-      color: white;
+    .error {
+      background: rgba(239,68,68,.12);
+      color: #fecaca;
+      border: 1px solid rgba(239,68,68,.28);
+      padding: 9px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .aircraft-marker {
       border-radius: 999px;
-      padding: 5px 9px;
+      padding: 5px 8px;
       font-size: 13px;
       font-weight: 850;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.46);
+      box-shadow: 0 1px 12px rgba(0,0,0,.42);
       white-space: nowrap;
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: white;
+      border: 1px solid rgba(255,255,255,.18);
     }
 
-    .live-marker {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      animation: pulse 1.8s infinite;
-    }
-
-    .stale-marker {
-      background: linear-gradient(135deg, #be123c, #ef4444);
-    }
-
-    .snapped-marker {
-      background: linear-gradient(135deg, #b45309, #f97316);
-    }
+    .marker-live { background: var(--blue); animation: pulse 1.8s infinite; }
+    .marker-ground { background: var(--green); }
+    .marker-landed { background: var(--orange); }
+    .marker-lost { background: var(--red); }
+    .marker-none { background: var(--grey); }
 
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.58), 0 8px 24px rgba(0, 0, 0, 0.46); }
-      70% { box-shadow: 0 0 0 12px rgba(56, 189, 248, 0), 0 8px 24px rgba(0, 0, 0, 0.46); }
-      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0), 0 8px 24px rgba(0, 0, 0, 0.46); }
+      0% { box-shadow: 0 0 0 0 rgba(56,189,248,.55), 0 1px 12px rgba(0,0,0,.42); }
+      70% { box-shadow: 0 0 0 11px rgba(56,189,248,0), 0 1px 12px rgba(0,0,0,.42); }
+      100% { box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 1px 12px rgba(0,0,0,.42); }
     }
 
-    .leaflet-popup-content-wrapper {
-      border-radius: 16px;
-    }
-
-    .leaflet-popup-content {
-      margin: 14px;
-    }
-
-    .leaflet-control-attribution {
-      background: rgba(2, 6, 23, 0.65) !important;
-      color: #cbd5e1 !important;
-    }
-
-    .leaflet-control-attribution a {
-      color: #93c5fd !important;
-    }
-
-    @media (max-width: 900px) {
-      body { overflow: auto; }
-
+    @media (max-width: 850px) {
       #app {
-        min-height: 100%;
-        height: auto;
         grid-template-columns: 1fr;
-        grid-template-rows: 60vh auto;
+        grid-template-rows: 60vh 40vh;
       }
 
-      #map {
-        order: 1;
-        min-height: 60vh;
-      }
+      #map { order: 1; }
 
       #sidebar {
         order: 2;
         border-right: none;
         border-top: 1px solid var(--border);
-        border-top-left-radius: 22px;
-        border-top-right-radius: 22px;
-        margin-top: -22px;
-        max-height: none;
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
+        margin-top: -20px;
       }
-
-      .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    @media (max-width: 430px) {
-      #sidebar { padding: 14px; }
-      .brand { flex-direction: column; }
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      .metric-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -535,84 +387,72 @@
 <body>
   <div id="app">
     <aside id="sidebar">
-      <div class="brand">
+      <div class="brand-row">
         <div>
           <h1>Tycoon Flight Tracker</h1>
-          <div class="brand-subtitle">Live aircraft intelligence dashboard</div>
+          <div class="subtext">Live aircraft intelligence dashboard</div>
         </div>
-        <div class="live-badge"><span class="live-dot"></span> Tracking active</div>
+        <div class="live-dot">Tracking active</div>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value" id="statTotal">-</div>
-          <div class="stat-label">Aircraft</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="statLive">-</div>
-          <div class="stat-label">Live</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="statLastKnown">-</div>
-          <div class="stat-label">Last known</div>
-        </div>
+      <div class="panel stats">
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="label">Aircraft</div></div>
+        <div class="stat"><div class="num" id="statLive">0</div><div class="label">Live</div></div>
+        <div class="stat"><div class="num" id="statOther">0</div><div class="label">Ground / Stale</div></div>
       </div>
 
-      <div class="meta-row">
-        <span id="lastUpdated">Loading aircraft...</span>
-        <span id="visibleCount"></span>
-      </div>
-
+      <div class="subtext" id="lastUpdated">Loading aircraft...</div>
       <div class="error" id="errorBox"></div>
 
       <div class="panel controls">
-        <button class="primary-button" onclick="loadAircraft()">Refresh now</button>
+        <button onclick="loadAircraft()">Refresh now</button>
         <button onclick="fitAllMarkers()">Fit all</button>
         <button onclick="resetFilters()">Reset filters</button>
       </div>
 
       <div class="panel">
-        <div class="filters-title">Filters</div>
+        <strong>Marker legend</strong>
+        <div class="legend-row"><span class="dot dot-blue"></span><span>Blue = Live airborne</span></div>
+        <div class="legend-row"><span class="dot dot-green"></span><span>Green = On ground</span></div>
+        <div class="legend-row"><span class="dot dot-orange"></span><span>Orange = Likely landed near airport</span></div>
+        <div class="legend-row"><span class="dot dot-red"></span><span>Red = Signal lost / last known raw location</span></div>
+        <div class="legend-row"><span class="dot dot-grey"></span><span>Grey = No usable position yet</span></div>
+      </div>
 
+      <div class="panel">
         <label>Pick aircraft</label>
-        <select id="aircraftFilter" onchange="applyFilters()">
-          <option value="">All aircraft</option>
-        </select>
+        <select id="aircraftFilter" onchange="applyFilters()"><option value="">All aircraft</option></select>
 
         <label>Status</label>
         <select id="statusFilter" onchange="applyFilters()">
           <option value="">All statuses</option>
           <option value="LIVE_AIRBORNE">Live airborne</option>
-          <option value="LAST_KNOWN_NOT_FLYING">Last known / not flying</option>
+          <option value="ON_GROUND">On ground</option>
+          <option value="LIKELY_LANDED">Likely landed</option>
+          <option value="SIGNAL_LOST">Signal lost</option>
+          <option value="NO_POSITION">No position</option>
         </select>
 
         <label>Group</label>
-        <select id="groupFilter" onchange="applyFilters()">
-          <option value="">All groups</option>
-        </select>
+        <select id="groupFilter" onchange="applyFilters()"><option value="">All groups</option></select>
 
         <label>Individual / Company</label>
-        <select id="ownerFilter" onchange="applyFilters()">
-          <option value="">All owners / companies</option>
-        </select>
+        <select id="ownerFilter" onchange="applyFilters()"><option value="">All owners / companies</option></select>
 
         <label>Category</label>
-        <select id="categoryFilter" onchange="applyFilters()">
-          <option value="">All categories</option>
-        </select>
+        <select id="categoryFilter" onchange="applyFilters()"><option value="">All categories</option></select>
 
         <div class="toggle-row">
-          <div class="toggle-pill" id="liveOnlyToggle" onclick="toggleLiveOnly()">Live only</div>
-          <div class="toggle-pill" id="lastKnownToggle" onclick="toggleLastKnownOnly()">Last known</div>
+          <label class="toggle"><input type="checkbox" id="showLive" checked onchange="applyFilters()"> Show live</label>
+          <label class="toggle"><input type="checkbox" id="showOther" checked onchange="applyFilters()"> Show others</label>
+        </div>
+        <div class="toggle-row">
+          <label class="toggle"><input type="checkbox" id="showRoutes" checked onchange="applyFilters()"> Show routes</label>
+          <label class="toggle"><input type="checkbox" id="routesOnlySelected" onchange="applyFilters()"> Routes only selected</label>
         </div>
       </div>
 
-      <div class="panel">
-        <strong style="font-size:13px;color:#f8fafc;">Marker legend</strong>
-        <div class="legend-row"><span class="dot dot-blue"></span><span>Blue = live airborne aircraft</span></div>
-        <div class="legend-row"><span class="dot dot-red"></span><span>Red / amber = last known or stale position</span></div>
-      </div>
-
+      <div class="subtext" id="visibleCount"></div>
       <div id="aircraftList"></div>
     </aside>
 
@@ -620,13 +460,9 @@
   </div>
 
   <script>
-    // Replace this with your deployed Apps Script Web App URL.
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww6VgAUdKqIFN7JjhhqU2mFHb5I8Xvg8kswllbGHn9iCgZeHVKuoZK_uVAeU0TAY91/exec';
 
-    const map = L.map('map', {
-      zoomControl: true,
-      worldCopyJump: true
-    }).setView([22.5, 78.9], 5);
+    const map = L.map('map').setView([22.5, 78.9], 5);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
@@ -634,60 +470,108 @@
     }).addTo(map);
 
     let markerGroup = L.featureGroup().addTo(map);
+    let routeGroup = L.featureGroup().addTo(map);
     let markers = {};
     let allAircraftData = [];
-    let liveOnly = false;
-    let lastKnownOnly = false;
+    let allRoutesData = [];
 
-    function loadAircraft() {
-      hideError();
-      document.getElementById('lastUpdated').textContent = 'Refreshing...';
-
-      const callbackName = 'aircraftCallback_' + Date.now();
+    function jsonp(endpoint, success, failure) {
+      const callbackName = 'cb_' + endpoint + '_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
 
       window[callbackName] = function(data) {
         try {
           delete window[callbackName];
           const script = document.getElementById(callbackName);
           if (script) script.remove();
-          renderAircraft(data || []);
+          success(data || []);
         } catch (err) {
-          showError('Error rendering aircraft: ' + err.message);
+          if (failure) failure(err);
         }
       };
 
       const script = document.createElement('script');
       script.id = callbackName;
-      script.src = APPS_SCRIPT_URL + '?callback=' + encodeURIComponent(callbackName) + '&t=' + Date.now();
+      script.src = APPS_SCRIPT_URL + '?callback=' + encodeURIComponent(callbackName) + '&endpoint=' + encodeURIComponent(endpoint) + '&t=' + Date.now();
       script.onerror = function() {
         delete window[callbackName];
-        showError('Unable to load aircraft data from Apps Script. Check the Web App URL and deployment permissions.');
+        if (failure) failure(new Error('Unable to load ' + endpoint + ' data from Apps Script.'));
       };
 
       document.body.appendChild(script);
     }
 
-    function renderAircraft(data) {
-      allAircraftData = Array.isArray(data) ? data : [];
-      updateStats(allAircraftData);
-      populateFilters(allAircraftData);
-      drawAircraft(applyCurrentFilters(allAircraftData));
+    function loadAircraft() {
+      hideError();
+      document.getElementById('lastUpdated').textContent = 'Refreshing...';
 
-      document.getElementById('lastUpdated').textContent =
-        'Updated ' + new Date().toLocaleString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          hour12: false
-        }) + ' IST';
+      jsonp('positions', function(data) {
+        allAircraftData = Array.isArray(data) ? data : [];
+        populateFilters(allAircraftData);
+        updateStats(allAircraftData);
+        drawAircraft(applyCurrentFilters(allAircraftData));
+
+        jsonp('routes', function(routes) {
+          allRoutesData = Array.isArray(routes) ? routes : [];
+          drawRoutes(applyCurrentFilters(allAircraftData));
+        }, function(err) {
+          showError('Aircraft loaded, but routes failed: ' + err.message);
+        });
+
+        document.getElementById('lastUpdated').textContent = 'Last refreshed: ' + new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST';
+      }, function(err) {
+        showError(err.message);
+      });
+    }
+
+    function statusKey(ac) {
+      if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) return 'NO_POSITION';
+      if (ac.markerMode === 'LIVE_AIRBORNE') return 'LIVE_AIRBORNE';
+      if (ac.displayMode === 'SNAPPED_TO_NEAREST_AIRPORT') return 'LIKELY_LANDED';
+      if (ac.onGround === true && ac.latestStatusRawStatus !== 'NO_SIGNAL' && ac.latestStatusRawStatus !== 'ERROR') return 'ON_GROUND';
+      return 'SIGNAL_LOST';
+    }
+
+    function statusText(ac) {
+      const s = statusKey(ac);
+      if (s === 'LIVE_AIRBORNE') return 'Live airborne';
+      if (s === 'ON_GROUND') return 'On ground';
+      if (s === 'LIKELY_LANDED') return 'Likely landed';
+      if (s === 'SIGNAL_LOST') return 'Signal lost';
+      return 'No position';
+    }
+
+    function statusClass(ac) {
+      const s = statusKey(ac);
+      if (s === 'LIVE_AIRBORNE') return 'blue';
+      if (s === 'ON_GROUND') return 'green';
+      if (s === 'LIKELY_LANDED') return 'orange';
+      if (s === 'SIGNAL_LOST') return 'red';
+      return 'grey';
+    }
+
+    function markerClass(ac) {
+      const s = statusKey(ac);
+      if (s === 'LIVE_AIRBORNE') return 'marker-live';
+      if (s === 'ON_GROUND') return 'marker-ground';
+      if (s === 'LIKELY_LANDED') return 'marker-landed';
+      if (s === 'SIGNAL_LOST') return 'marker-lost';
+      return 'marker-none';
+    }
+
+    function markerSymbol(ac) {
+      const s = statusKey(ac);
+      if (s === 'LIVE_AIRBORNE') return '✈';
+      if (s === 'ON_GROUND') return '●';
+      if (s === 'LIKELY_LANDED') return '◆';
+      if (s === 'SIGNAL_LOST') return '●';
+      return '○';
     }
 
     function updateStats(data) {
-      const total = data.length;
-      const live = data.filter(ac => ac.markerMode === 'LIVE_AIRBORNE').length;
-      const lastKnown = total - live;
-
-      document.getElementById('statTotal').textContent = total;
+      const live = data.filter(ac => statusKey(ac) === 'LIVE_AIRBORNE').length;
+      document.getElementById('statTotal').textContent = data.length;
       document.getElementById('statLive').textContent = live;
-      document.getElementById('statLastKnown').textContent = lastKnown;
+      document.getElementById('statOther').textContent = Math.max(0, data.length - live);
     }
 
     function populateFilters(data) {
@@ -706,17 +590,10 @@
       const owners = [...new Set(data.flatMap(ac => [ac.individual, ac.company]).filter(Boolean))].sort();
       const categories = [...new Set(data.map(ac => ac.category).filter(Boolean))].sort();
 
-      aircraftSelect.innerHTML = '<option value="">All aircraft</option>' +
-        tails.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('');
-
-      groupSelect.innerHTML = '<option value="">All groups</option>' +
-        groups.map(g => `<option value="${escapeAttr(g)}">${escapeHtml(g)}</option>`).join('');
-
-      ownerSelect.innerHTML = '<option value="">All owners / companies</option>' +
-        owners.map(o => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
-
-      categorySelect.innerHTML = '<option value="">All categories</option>' +
-        categories.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+      aircraftSelect.innerHTML = '<option value="">All aircraft</option>' + tails.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('');
+      groupSelect.innerHTML = '<option value="">All groups</option>' + groups.map(g => `<option value="${escapeAttr(g)}">${escapeHtml(g)}</option>`).join('');
+      ownerSelect.innerHTML = '<option value="">All owners / companies</option>' + owners.map(o => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
+      categorySelect.innerHTML = '<option value="">All categories</option>' + categories.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
 
       if (tails.includes(currentAircraft)) aircraftSelect.value = currentAircraft;
       if (groups.includes(currentGroup)) groupSelect.value = currentGroup;
@@ -730,22 +607,25 @@
       const group = document.getElementById('groupFilter').value;
       const owner = document.getElementById('ownerFilter').value;
       const category = document.getElementById('categoryFilter').value;
+      const showLive = document.getElementById('showLive').checked;
+      const showOther = document.getElementById('showOther').checked;
 
       return data.filter(ac => {
-        const aircraftOk = !aircraft || ac.tail === aircraft;
-        const statusOk = !status || ac.markerMode === status;
-        const liveOnlyOk = !liveOnly || ac.markerMode === 'LIVE_AIRBORNE';
-        const lastKnownOnlyOk = !lastKnownOnly || ac.markerMode !== 'LIVE_AIRBORNE';
-        const groupOk = !group || ac.group === group;
-        const ownerOk = !owner || ac.individual === owner || ac.company === owner;
-        const categoryOk = !category || ac.category === category;
-
-        return aircraftOk && statusOk && liveOnlyOk && lastKnownOnlyOk && groupOk && ownerOk && categoryOk;
+        const s = statusKey(ac);
+        const isLive = s === 'LIVE_AIRBORNE';
+        return (!aircraft || ac.tail === aircraft) &&
+          (!status || s === status) &&
+          (!group || ac.group === group) &&
+          (!owner || ac.individual === owner || ac.company === owner) &&
+          (!category || ac.category === category) &&
+          ((isLive && showLive) || (!isLive && showOther));
       });
     }
 
     function applyFilters() {
-      drawAircraft(applyCurrentFilters(allAircraftData));
+      const filtered = applyCurrentFilters(allAircraftData);
+      drawAircraft(filtered);
+      drawRoutes(filtered);
     }
 
     function resetFilters() {
@@ -754,42 +634,22 @@
       document.getElementById('groupFilter').value = '';
       document.getElementById('ownerFilter').value = '';
       document.getElementById('categoryFilter').value = '';
-      liveOnly = false;
-      lastKnownOnly = false;
-      updateToggleState();
-      drawAircraft(allAircraftData);
-    }
-
-    function toggleLiveOnly() {
-      liveOnly = !liveOnly;
-      if (liveOnly) lastKnownOnly = false;
-      updateToggleState();
+      document.getElementById('showLive').checked = true;
+      document.getElementById('showOther').checked = true;
+      document.getElementById('showRoutes').checked = true;
+      document.getElementById('routesOnlySelected').checked = false;
       applyFilters();
-    }
-
-    function toggleLastKnownOnly() {
-      lastKnownOnly = !lastKnownOnly;
-      if (lastKnownOnly) liveOnly = false;
-      updateToggleState();
-      applyFilters();
-    }
-
-    function updateToggleState() {
-      document.getElementById('liveOnlyToggle').classList.toggle('active', liveOnly);
-      document.getElementById('lastKnownToggle').classList.toggle('active', lastKnownOnly);
     }
 
     function drawAircraft(data) {
       markerGroup.clearLayers();
       markers = {};
-
       const list = document.getElementById('aircraftList');
       list.innerHTML = '';
-
-      document.getElementById('visibleCount').textContent = `${data.length} shown`;
+      document.getElementById('visibleCount').textContent = `${data.length} aircraft shown`;
 
       if (!data.length) {
-        list.innerHTML = '<div class="panel" style="color:#94a3b8;font-size:13px;line-height:1.45;">No aircraft match the selected filters, or no valid positions are available.</div>';
+        list.innerHTML = '<div class="subtext">No aircraft match the selected filters, or no valid positions are available.</div>';
         return;
       }
 
@@ -797,14 +657,7 @@
         if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) return;
 
         const marker = L.marker([Number(ac.lat), Number(ac.lon)], { icon: aircraftIcon(ac) });
-
-        marker.bindTooltip(tooltipHtml(ac), {
-          direction: 'top',
-          offset: [0, -12],
-          opacity: 0.95,
-          sticky: true
-        });
-
+        marker.bindTooltip(tooltipHtml(ac), { direction: 'top', offset: [0, -12], opacity: 0.95, sticky: true });
         marker.bindPopup(popupHtml(ac));
         marker.addTo(markerGroup);
         markers[ac.tail] = marker;
@@ -822,14 +675,49 @@
       fitAllMarkers();
     }
 
-    function aircraftIcon(ac) {
-      const isLive = ac.markerMode === 'LIVE_AIRBORNE';
-      const isSnapped = ac.displayMode === 'SNAPPED_TO_NEAREST_AIRPORT';
-      const symbol = isLive ? '✈' : isSnapped ? '◆' : '●';
-      const className = isLive ? 'live-marker' : isSnapped ? 'snapped-marker' : 'stale-marker';
+    function drawRoutes(visibleAircraft) {
+      routeGroup.clearLayers();
+      if (!document.getElementById('showRoutes').checked) return;
 
+      const selectedAircraft = document.getElementById('aircraftFilter').value;
+      const routesOnlySelected = document.getElementById('routesOnlySelected').checked;
+      const visibleTails = new Set(visibleAircraft.map(ac => ac.tail));
+
+      allRoutesData.forEach(route => {
+        if (!route || !route.tail || !Array.isArray(route.points) || route.points.length < 2) return;
+        if (routesOnlySelected && selectedAircraft && route.tail !== selectedAircraft) return;
+        if (!visibleTails.has(route.tail)) return;
+
+        const latlngs = route.points
+          .map(p => [Number(p.lat), Number(p.lon)])
+          .filter(p => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+
+        if (latlngs.length < 2) return;
+
+        const aircraft = allAircraftData.find(ac => ac.tail === route.tail) || {};
+        const color = routeColor(statusKey(aircraft));
+
+        L.polyline(latlngs, {
+          color: color,
+          weight: 2.5,
+          opacity: 0.75,
+          dashArray: '7, 9',
+          lineCap: 'round'
+        }).bindTooltip(`${escapeHtml(route.tail)} route`, { sticky: true }).addTo(routeGroup);
+      });
+    }
+
+    function routeColor(status) {
+      if (status === 'LIVE_AIRBORNE') return '#38bdf8';
+      if (status === 'ON_GROUND') return '#22c55e';
+      if (status === 'LIKELY_LANDED') return '#f59e0b';
+      if (status === 'SIGNAL_LOST') return '#ef4444';
+      return '#64748b';
+    }
+
+    function aircraftIcon(ac) {
       return L.divIcon({
-        html: `<div class="custom-marker ${className}">${symbol} ${escapeHtml(ac.tail)}</div>`,
+        html: `<div class="aircraft-marker ${markerClass(ac)}">${markerSymbol(ac)} ${escapeHtml(ac.tail)}</div>`,
         className: '',
         iconSize: [116, 30],
         iconAnchor: [58, 15]
@@ -837,89 +725,56 @@
     }
 
     function tooltipHtml(ac) {
-      const label = ac.markerMode === 'LIVE_AIRBORNE' ? 'Live position' : 'Last known';
-      return `<div style="font-size:12px;line-height:1.35;"><b>${escapeHtml(ac.tail)}</b><br>${escapeHtml(label)}: ${escapeHtml(ac.positionTime || ac.fetchedAt || '-')}</div>`;
+      return `<div style="font-size:12px; line-height:1.35;"><b>${escapeHtml(ac.tail)}</b><br>${escapeHtml(statusText(ac))}: ${escapeHtml(ac.positionTime || ac.fetchedAt || '-')}</div>`;
     }
 
     function popupHtml(ac) {
-      const snappedWarning = ac.displayMode === 'SNAPPED_TO_NEAREST_AIRPORT'
-        ? `<div class="warning">Marker snapped to nearest airport because latest ADS-B position is stale. Raw coordinate: ${escapeHtml(ac.rawLat)}, ${escapeHtml(ac.rawLon)}</div>`
+      const snappedWarning = statusKey(ac) === 'LIKELY_LANDED'
+        ? `<div class="warning">Marker snapped to nearest airport because the latest ADS-B position is stale and close to an airport. Raw coordinate: ${escapeHtml(ac.rawLat)}, ${escapeHtml(ac.rawLon)}</div>`
         : '';
 
       return `
         <div class="popup-title">${escapeHtml(ac.tail)}</div>
-        <div class="popup-subtitle">${escapeHtml(ac.individual || ac.company || ac.group || 'Unknown owner')} · ${escapeHtml(ac.category || 'Aircraft')}</div>
         <div class="popup-body">
-          <div><b>Status:</b> ${statusText(ac)}</div>
-          <div><b>Company:</b> ${escapeHtml(ac.company || '-')}</div>
-          <div><b>Group:</b> ${escapeHtml(ac.group || '-')}</div>
-
+          <b>${escapeHtml(statusText(ac))}</b><br>
+          ${escapeHtml(ac.individual || ac.company || ac.group || 'Unknown owner')}<br>
+          ${escapeHtml(ac.company || '')}
           <div class="popup-section">
-            <div class="popup-section-title">Flight data</div>
-            <div><b>Callsign:</b> ${escapeHtml(ac.callsign || '-')}</div>
-            <div><b>Type:</b> ${escapeHtml(ac.type || '-')}</div>
-            <div><b>Altitude:</b> ${escapeHtml(ac.altitude || '-')} ft</div>
-            <div><b>Ground speed:</b> ${escapeHtml(ac.groundSpeed || '-')} kt</div>
-            <div><b>Track:</b> ${escapeHtml(ac.track || '-')}°</div>
+            <b>Flight data</b><br>
+            Callsign: ${escapeHtml(ac.callsign || '-')}<br>
+            Type: ${escapeHtml(ac.type || '-')}<br>
+            Altitude: ${escapeHtml(ac.altitude || '-')} ft<br>
+            Ground speed: ${escapeHtml(ac.groundSpeed || '-')} kt<br>
+            Track: ${escapeHtml(ac.track || '-')}°
           </div>
-
           <div class="popup-section">
-            <div class="popup-section-title">Location</div>
-            <div><b>Nearest airport:</b> ${escapeHtml(ac.nearestAirport || '-')} ${ac.nearestAirportIcao ? '/' + escapeHtml(ac.nearestAirportIcao) : ''} ${ac.nearestAirportDistanceNm ? '(' + escapeHtml(ac.nearestAirportDistanceNm) + ' NM)' : ''}</div>
-            <div><b>Position time:</b> ${escapeHtml(ac.positionTime || '-')}</div>
-            <div><b>Updated:</b> ${escapeHtml(ac.fetchedAt || '-')}</div>
-            <div><b>Shown Lat/Lon:</b> ${escapeHtml(ac.lat)}, ${escapeHtml(ac.lon)}</div>
+            <b>Location</b><br>
+            Nearest airport: ${escapeHtml(ac.nearestAirport || '-')}${ac.nearestAirportIcao ? '/' + escapeHtml(ac.nearestAirportIcao) : ''}${ac.nearestAirportDistanceNm ? ' (' + escapeHtml(ac.nearestAirportDistanceNm) + ' NM)' : ''}<br>
+            Position time: ${escapeHtml(ac.positionTime || '-')}<br>
+            Updated: ${escapeHtml(ac.fetchedAt || '-')}<br>
+            Lat/Lon: ${escapeHtml(ac.lat)}, ${escapeHtml(ac.lon)}
           </div>
           ${snappedWarning}
-        </div>
-      `;
+        </div>`;
     }
 
     function cardHtml(ac) {
-      const isLive = ac.markerMode === 'LIVE_AIRBORNE';
-      const statusClass = isLive ? 'status-airborne' : 'status-stale';
-      const fresh = freshnessClass(ac);
-
+      const cls = statusClass(ac);
       return `
         <div class="card-head">
           <div>
             <div class="tail">${escapeHtml(ac.tail)}</div>
             <div class="meta">${escapeHtml(ac.individual || ac.company || ac.group || 'Unknown owner')}</div>
-            <div class="meta">${escapeHtml([ac.group, ac.category].filter(Boolean).join(' · '))}</div>
+            <div class="meta">${escapeHtml(ac.company || '')}</div>
           </div>
-          <div class="status ${statusClass}">${isLive ? 'Live' : 'Last known'}</div>
+          <div class="pill pill-${cls}">${escapeHtml(statusText(ac))}</div>
         </div>
-
-        <div class="metric-grid">
-          <div class="metric"><div class="metric-label">Altitude</div><div class="metric-value">${escapeHtml(ac.altitude || '-')} ft</div></div>
-          <div class="metric"><div class="metric-label">Speed</div><div class="metric-value">${escapeHtml(ac.groundSpeed || '-')} kt</div></div>
-          <div class="metric"><div class="metric-label">Near</div><div class="metric-value">${escapeHtml(ac.nearestAirport || '-')}</div></div>
+        <div class="metrics">
+          <div class="metric"><div class="k">Alt</div><div class="v">${escapeHtml(ac.altitude || '-')} ft</div></div>
+          <div class="metric"><div class="k">Speed</div><div class="v">${escapeHtml(ac.groundSpeed || '-')} kt</div></div>
+          <div class="metric"><div class="k">Near</div><div class="v">${escapeHtml(ac.nearestAirport || '-')}</div></div>
         </div>
-
-        <div class="card-foot">
-          ${escapeHtml(ac.callsign || 'No callsign')} · ${escapeHtml(statusText(ac))}<br>
-          Position: ${escapeHtml(ac.positionTime || '-')}<br>
-          Updated: ${escapeHtml(ac.fetchedAt || '-')}
-          <div class="freshness ${fresh.className}">${fresh.label}</div>
-        </div>
-      `;
-    }
-
-    function freshnessClass(ac) {
-      const mins = Number(ac.positionAgeMinutes);
-      if (!Number.isFinite(mins)) return { className: 'fresh-red', label: 'Age unknown' };
-      if (mins <= 15) return { className: 'fresh-green', label: `${Math.round(mins)} min old` };
-      if (mins <= 60) return { className: 'fresh-amber', label: `${Math.round(mins)} min old` };
-      return { className: 'fresh-red', label: `${Math.round(mins)} min old` };
-    }
-
-    function statusText(ac) {
-      if (ac.markerMode === 'LIVE_AIRBORNE') return 'Live / airborne';
-      if (ac.displayMode === 'SNAPPED_TO_NEAREST_AIRPORT') return 'Not flying / last known near airport';
-      if (ac.latestStatusRawStatus === 'NO_SIGNAL') return 'Not flying or not visible / last known location';
-      if (ac.latestStatusRawStatus === 'ERROR') return 'Signal error / last known location';
-      if (ac.onGround) return 'On ground / last known location';
-      return 'Last known location';
+        <div class="updated">Position: ${escapeHtml(ac.positionTime || '-')} · Updated: ${escapeHtml(ac.fetchedAt || '-')}</div>`;
     }
 
     function fitAllMarkers() {
