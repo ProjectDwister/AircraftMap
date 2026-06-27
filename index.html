@@ -341,16 +341,54 @@
       display: none;
     }
 
-    .aircraft-marker {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      color: white;
-      text-align: center;
-      white-space: nowrap;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,.45));
-    }
+   .aircraft-marker-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.aircraft-marker-icon {
+  display: inline-block;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  text-shadow:
+    0 2px 8px rgba(0,0,0,0.65),
+    0 0 10px currentColor;
+  transform-origin: center center;
+}
+
+.aircraft-marker-label {
+  margin-top: 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.78);
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.aircraft-marker-icon.live {
+  animation: aircraftPulse 1.8s infinite;
+}
+
+@keyframes aircraftPulse {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(56, 189, 248, 0.8));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.95));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 0 rgba(56, 189, 248, 0.8));
+  }
+}
 
     .aircraft-symbol-wrap {
       width: 34px;
@@ -753,23 +791,48 @@
     }
 
     function aircraftIcon(ac) {
-      const icon = aircraftCategoryIcon(ac);
-      const rotation = aircraftTrackDegrees(ac);
+  const status = getVisualStatus(ac);
+  const color = status.color;
+  const track = Number(ac.track || 0);
 
-      return L.divIcon({
-        html: `
-          <div class="aircraft-marker ${markerClass(ac)}">
-            <div class="aircraft-symbol-wrap">
-              <span class="aircraft-symbol" style="transform: rotate(${rotation}deg);">${icon}</span>
-            </div>
-            <div class="aircraft-tail-label">${escapeHtml(ac.tail)}</div>
-          </div>
-        `,
-        className: '',
-        iconSize: [74, 58],
-        iconAnchor: [37, 29]
-      });
-    }
+  const category = String(ac.category || '').toLowerCase();
+
+  let icon = '✈';
+
+  if (category.includes('helicopter')) {
+    icon = '🚁';
+  } else if (category.includes('turboprop')) {
+    icon = '🛩';
+  } else {
+    icon = '✈';
+  }
+
+  const shouldRotate =
+    ac.markerMode === 'LIVE_AIRBORNE' &&
+    Number.isFinite(track);
+
+  return L.divIcon({
+    html: `
+      <div class="aircraft-marker-wrap">
+        <div
+          class="aircraft-marker-icon ${status.className}"
+          style="
+            color:${color};
+            transform: rotate(${shouldRotate ? track : 0}deg);
+          "
+        >
+          ${icon}
+        </div>
+        <div class="aircraft-marker-label">
+          ${escapeHtml(ac.tail)}
+        </div>
+      </div>
+    `,
+    className: '',
+    iconSize: [76, 58],
+    iconAnchor: [38, 29]
+  });
+}
 
     function tooltipHtml(ac) {
       return `<div style="font-size:12px; line-height:1.35;"><b>${escapeHtml(ac.tail)}</b><br>${escapeHtml(statusText(ac))}: ${escapeHtml(ac.positionTime || ac.fetchedAt || '-')}</div>`;
