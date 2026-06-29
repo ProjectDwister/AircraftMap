@@ -5,8 +5,14 @@
   <title>Tycoon Flight Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
 
   <style>
     :root {
@@ -45,7 +51,6 @@
         linear-gradient(180deg, #020617, #0f172a);
       border-right: 1px solid rgba(148, 163, 184, 0.22);
       box-sizing: border-box;
-      z-index: 900;
     }
 
     #map {
@@ -136,7 +141,6 @@
       color: var(--muted);
       font-size: 12px;
       margin: 8px 0 12px;
-      line-height: 1.4;
     }
 
     .controls {
@@ -245,9 +249,6 @@
       font-size: 12px;
       cursor: pointer;
       user-select: none;
-      margin: 0;
-      text-transform: none;
-      letter-spacing: normal;
     }
 
     .toggle input {
@@ -387,6 +388,7 @@
       line-height: 1.35;
     }
 
+    /* Aircraft icon marker: coloured aircraft icon, no pills, no fade/pulse */
     .aircraft-marker-wrap {
       display: flex;
       flex-direction: column;
@@ -407,29 +409,39 @@
 
     .aircraft-marker-label {
       margin-top: 1px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(2, 6, 23, 0.82);
+      padding: 3px 7px;
+      border-radius: 10px;
+      background: rgba(2, 6, 23, 0.84);
       color: #f8fafc;
-      font-size: 11px;
-      font-weight: 900;
       white-space: nowrap;
       border: 1px solid rgba(148, 163, 184, 0.25);
       box-shadow: 0 4px 12px rgba(0,0,0,0.42);
+      text-align: center;
+      line-height: 1.15;
     }
 
-    .aircraft-marker-icon.live {
-      animation: aircraftPulse 1.8s infinite;
+    .aircraft-marker-tail {
+      font-size: 11px;
+      font-weight: 900;
     }
 
-    @keyframes aircraftPulse {
-      0% { filter: drop-shadow(0 0 0 rgba(56, 189, 248, 0.7)); }
-      50% { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 1)); }
-      100% { filter: drop-shadow(0 0 0 rgba(56, 189, 248, 0.7)); }
+    .aircraft-marker-company {
+      margin-top: 2px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #cbd5e1;
+      max-width: 92px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .leaflet-popup-content-wrapper {
       border-radius: 14px;
+    }
+
+    .leaflet-control-layers {
+      border-radius: 12px;
+      overflow: hidden;
     }
 
     @media (max-width: 900px) {
@@ -438,7 +450,9 @@
         grid-template-rows: 58vh 42vh;
       }
 
-      #map { order: 1; }
+      #map {
+        order: 1;
+      }
 
       #sidebar {
         order: 2;
@@ -447,6 +461,11 @@
         border-top-left-radius: 18px;
         border-top-right-radius: 18px;
         margin-top: -18px;
+        z-index: 1000;
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, 1fr);
       }
     }
   </style>
@@ -487,7 +506,7 @@
       <div class="error" id="errorBox"></div>
 
       <div class="panel controls">
-        <button onclick="loadAircraft(true)">Refresh now</button>
+        <button onclick="loadAircraft()">Refresh now</button>
         <button onclick="fitAllMarkers()">Fit all</button>
         <button onclick="resetFilters()">Reset filters</button>
       </div>
@@ -541,21 +560,11 @@
 
         <div class="toggle-row">
           <label class="toggle">
-            <input type="checkbox" id="showLiveToggle" checked onchange="applyFilters()">
-            Show live
-          </label>
-          <label class="toggle">
-            <input type="checkbox" id="showOtherToggle" checked onchange="applyFilters()">
-            Show others
-          </label>
-        </div>
-        <div class="toggle-row">
-          <label class="toggle">
-            <input type="checkbox" id="showRoutesToggle" checked onchange="handleRoutesToggle()">
+            <input type="checkbox" id="showRoutesToggle" checked onchange="drawAll()">
             Show routes
           </label>
           <label class="toggle">
-            <input type="checkbox" id="routesSelectedOnlyToggle" checked onchange="drawRoutes(applyCurrentFilters(allAircraftData))">
+            <input type="checkbox" id="routesSelectedOnlyToggle" checked onchange="drawAll()">
             Selected routes only
           </label>
         </div>
@@ -571,20 +580,33 @@
   <script>
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbww6VgAUdKqIFN7JjhhqU2mFHb5I8Xvg8kswllbGHn9iCgZeHVKuoZK_uVAeU0TAY91/exec';
 
-    const map = L.map('map', { zoomControl: true }).setView([22.5, 78.9], 5);
+    const map = L.map('map', {
+      zoomControl: true
+    }).setView([22.5, 78.9], 5);
 
     const baseLayers = {
       'Dark View': L.tileLayer(
         'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }
+        {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        }
       ),
+
       'Standard View': L.tileLayer(
         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }
+        {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
+        }
       ),
+
       'Satellite View': L.tileLayer(
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 19, attribution: 'Tiles &copy; Esri' }
+        {
+          maxZoom: 19,
+          attribution: 'Tiles &copy; Esri'
+        }
       )
     };
 
@@ -593,106 +615,100 @@
 
     let markerGroup = L.featureGroup().addTo(map);
     let routeGroup = L.featureGroup().addTo(map);
+
     let markers = {};
     let allAircraftData = [];
     let allRoutesData = [];
-    let routesLoaded = false;
-    let routesLoading = false;
 
     function changeMapView() {
       const selected = document.getElementById('mapViewSelect').value;
-      if (currentBaseLayer) map.removeLayer(currentBaseLayer);
+
+      if (currentBaseLayer) {
+        map.removeLayer(currentBaseLayer);
+      }
+
       currentBaseLayer = baseLayers[selected] || baseLayers['Dark View'];
       currentBaseLayer.addTo(map);
     }
 
-    function jsonpRequest(endpoint, callback, failure) {
-      const callbackName = 'aircraftCallback_' + endpoint + '_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    function jsonpRequest(endpoint, callback) {
+      const callbackName =
+        'aircraftCallback_' +
+        endpoint +
+        '_' +
+        Date.now() +
+        '_' +
+        Math.floor(Math.random() * 100000);
 
       window[callbackName] = function(data) {
         try {
           delete window[callbackName];
+
           const script = document.getElementById(callbackName);
           if (script) script.remove();
+
           callback(data || []);
         } catch (err) {
-          if (failure) failure(err);
+          showError('Error handling ' + endpoint + ': ' + err.message);
         }
       };
 
       const script = document.createElement('script');
       script.id = callbackName;
-      script.src = APPS_SCRIPT_URL + '?endpoint=' + encodeURIComponent(endpoint) + '&callback=' + encodeURIComponent(callbackName) + '&t=' + Date.now();
+      script.src =
+        APPS_SCRIPT_URL +
+        '?endpoint=' +
+        encodeURIComponent(endpoint) +
+        '&callback=' +
+        encodeURIComponent(callbackName) +
+        '&t=' +
+        Date.now();
+
       script.onerror = function() {
         delete window[callbackName];
-        if (failure) failure(new Error('Unable to load ' + endpoint + ' from Apps Script.'));
+        showError('Unable to load ' + endpoint + ' from Apps Script.');
       };
+
       document.body.appendChild(script);
     }
 
-    function loadAircraft(forceRoutesReload = false) {
+    function loadAircraft() {
       hideError();
-      document.getElementById('lastUpdated').textContent = 'Refreshing aircraft...';
+      document.getElementById('lastUpdated').textContent = 'Refreshing...';
 
       jsonpRequest('positions', function(positionData) {
         allAircraftData = Array.isArray(positionData) ? positionData : [];
+
         populateFilters(allAircraftData);
         updateStats(allAircraftData);
-        drawAircraft(applyCurrentFilters(allAircraftData));
+        drawAll();
 
         document.getElementById('lastUpdated').textContent =
-          'Aircraft loaded: ' + new Date().toLocaleString('en-IN', {
+          'Last refreshed: ' + new Date().toLocaleString('en-IN', {
             timeZone: 'Asia/Kolkata',
             hour12: false
           }) + ' IST';
 
-        if (forceRoutesReload) {
-          routesLoaded = false;
-          allRoutesData = [];
-        }
+        const showRoutes = document.getElementById('showRoutesToggle').checked;
 
-        if (document.getElementById('showRoutesToggle').checked) {
-          loadRoutesIfNeeded();
-        } else {
-          routeGroup.clearLayers();
+        if (showRoutes) {
+          loadRoutesInBackground();
         }
-      }, function(err) {
-        showError(err.message);
       });
     }
 
-    function loadRoutesIfNeeded() {
-      if (routesLoaded || routesLoading) {
-        drawRoutes(applyCurrentFilters(allAircraftData));
-        return;
-      }
-
-      routesLoading = true;
-      document.getElementById('lastUpdated').textContent += ' · Loading routes...';
-
+    function loadRoutesInBackground() {
       jsonpRequest('routes', function(routeData) {
-        routesLoading = false;
-        routesLoaded = true;
         allRoutesData = Array.isArray(routeData) ? routeData : [];
         drawRoutes(applyCurrentFilters(allAircraftData));
-      }, function(err) {
-        routesLoading = false;
-        showError('Aircraft loaded, but routes failed: ' + err.message);
       });
-    }
-
-    function handleRoutesToggle() {
-      if (!document.getElementById('showRoutesToggle').checked) {
-        routeGroup.clearLayers();
-        return;
-      }
-      loadRoutesIfNeeded();
     }
 
     function updateStats(data) {
       const total = data.length;
       const live = data.filter(ac => getVisualStatus(ac).key === 'live').length;
       const stale = total - live;
+
       document.getElementById('totalStat').textContent = total;
       document.getElementById('liveStat').textContent = live;
       document.getElementById('staleStat').textContent = stale;
@@ -711,13 +727,29 @@
 
       const tails = [...new Set(data.map(ac => ac.tail).filter(Boolean))].sort();
       const groups = [...new Set(data.map(ac => ac.group).filter(Boolean))].sort();
-      const owners = [...new Set(data.flatMap(ac => [ac.individual, ac.company]).filter(Boolean))].sort();
+
+      const owners = [...new Set(data.flatMap(ac => [
+        ac.individual,
+        ac.company
+      ]).filter(Boolean))].sort();
+
       const categories = [...new Set(data.map(ac => ac.category).filter(Boolean))].sort();
 
-      aircraftSelect.innerHTML = '<option value="">All aircraft</option>' + tails.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('');
-      groupSelect.innerHTML = '<option value="">All groups</option>' + groups.map(g => `<option value="${escapeAttr(g)}">${escapeHtml(g)}</option>`).join('');
-      ownerSelect.innerHTML = '<option value="">All owners / companies</option>' + owners.map(o => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
-      categorySelect.innerHTML = '<option value="">All categories</option>' + categories.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+      aircraftSelect.innerHTML =
+        '<option value="">All aircraft</option>' +
+        tails.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join('');
+
+      groupSelect.innerHTML =
+        '<option value="">All groups</option>' +
+        groups.map(g => `<option value="${escapeAttr(g)}">${escapeHtml(g)}</option>`).join('');
+
+      ownerSelect.innerHTML =
+        '<option value="">All owners / companies</option>' +
+        owners.map(o => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
+
+      categorySelect.innerHTML =
+        '<option value="">All categories</option>' +
+        categories.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
 
       if (tails.includes(currentAircraft)) aircraftSelect.value = currentAircraft;
       if (groups.includes(currentGroup)) groupSelect.value = currentGroup;
@@ -731,29 +763,22 @@
       const group = document.getElementById('groupFilter').value;
       const owner = document.getElementById('ownerFilter').value;
       const category = document.getElementById('categoryFilter').value;
-      const showLive = document.getElementById('showLiveToggle').checked;
-      const showOther = document.getElementById('showOtherToggle').checked;
 
       return data.filter(ac => {
         const visualStatus = getVisualStatus(ac);
-        const isLive = visualStatus.key === 'live';
-        return (!aircraft || ac.tail === aircraft) &&
-          (!status || visualStatus.key === status) &&
-          (!group || ac.group === group) &&
-          (!owner || ac.individual === owner || ac.company === owner) &&
-          (!category || ac.category === category) &&
-          ((isLive && showLive) || (!isLive && showOther));
+
+        const aircraftOk = !aircraft || ac.tail === aircraft;
+        const statusOk = !status || visualStatus.key === status;
+        const groupOk = !group || ac.group === group;
+        const ownerOk = !owner || ac.individual === owner || ac.company === owner;
+        const categoryOk = !category || ac.category === category;
+
+        return aircraftOk && statusOk && groupOk && ownerOk && categoryOk;
       });
     }
 
     function applyFilters() {
-      const filtered = applyCurrentFilters(allAircraftData);
-      drawAircraft(filtered);
-      if (document.getElementById('showRoutesToggle').checked) {
-        loadRoutesIfNeeded();
-      } else {
-        routeGroup.clearLayers();
-      }
+      drawAll();
     }
 
     function resetFilters() {
@@ -762,40 +787,59 @@
       document.getElementById('groupFilter').value = '';
       document.getElementById('ownerFilter').value = '';
       document.getElementById('categoryFilter').value = '';
-      document.getElementById('showLiveToggle').checked = true;
-      document.getElementById('showOtherToggle').checked = true;
-      document.getElementById('showRoutesToggle').checked = true;
-      document.getElementById('routesSelectedOnlyToggle').checked = true;
-      applyFilters();
+      drawAll();
+    }
+
+    function drawAll() {
+      const filtered = applyCurrentFilters(allAircraftData);
+      drawRoutes(filtered);
+      drawAircraft(filtered);
     }
 
     function drawAircraft(data) {
       markerGroup.clearLayers();
       markers = {};
+
       const list = document.getElementById('aircraftList');
       list.innerHTML = '';
-      document.getElementById('visibleCount').textContent = `${data.length} aircraft shown`;
+
+      document.getElementById('visibleCount').textContent =
+        `${data.length} aircraft shown`;
 
       if (!data.length) {
-        list.innerHTML = '<div class="subtext">No aircraft match the selected filters, or no valid positions are available.</div>';
+        list.innerHTML =
+          '<div class="subtext">No aircraft match the selected filters, or no valid positions are available.</div>';
         return;
       }
 
       data.forEach(ac => {
-        if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) return;
+        if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) {
+          return;
+        }
 
-        const marker = L.marker([Number(ac.lat), Number(ac.lon)], { icon: aircraftIcon(ac) });
-        marker.bindTooltip(tooltipHtml(ac), { direction: 'top', offset: [0, -12], opacity: 0.95, sticky: true });
+        const marker = L.marker([Number(ac.lat), Number(ac.lon)], {
+          icon: aircraftIcon(ac)
+        });
+
+        marker.bindTooltip(tooltipHtml(ac), {
+          direction: 'top',
+          offset: [0, -12],
+          opacity: 0.95,
+          sticky: true
+        });
+
         marker.bindPopup(popupHtml(ac));
         marker.addTo(markerGroup);
         markers[ac.tail] = marker;
 
         const card = document.createElement('div');
         card.className = 'aircraft-card';
+
         card.onclick = function() {
           map.setView([Number(ac.lat), Number(ac.lon)], 8);
           marker.openPopup();
         };
+
         card.innerHTML = cardHtml(ac);
         list.appendChild(card);
       });
@@ -805,35 +849,54 @@
 
     function drawRoutes(filteredAircraft) {
       routeGroup.clearLayers();
-      if (!document.getElementById('showRoutesToggle').checked) return;
-      if (!routesLoaded || !allRoutesData.length) return;
+
+      const showRoutes = document.getElementById('showRoutesToggle').checked;
+      if (!showRoutes) return;
 
       const selectedOnly = document.getElementById('routesSelectedOnlyToggle').checked;
       const selectedAircraft = document.getElementById('aircraftFilter').value;
+
+      if (!allRoutesData.length) return;
+
       const visibleTails = new Set(filteredAircraft.map(ac => ac.tail));
       const statusByTail = {};
-      filteredAircraft.forEach(ac => { statusByTail[ac.tail] = getVisualStatus(ac); });
+      filteredAircraft.forEach(ac => {
+        statusByTail[ac.tail] = getVisualStatus(ac);
+      });
 
       allRoutesData.forEach(route => {
         const tail = String(route.tail || '');
-        if (!tail || !visibleTails.has(tail)) return;
+
+        if (!tail) return;
+        if (!visibleTails.has(tail)) return;
         if (selectedOnly && selectedAircraft && tail !== selectedAircraft) return;
 
         const points = Array.isArray(route.points) ? route.points : [];
         const latLngs = points
-          .filter(p => Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lon)))
+          .filter(p =>
+            Number.isFinite(Number(p.lat)) &&
+            Number.isFinite(Number(p.lon))
+          )
           .map(p => [Number(p.lat), Number(p.lon)]);
 
         if (latLngs.length < 2) return;
 
-        const status = statusByTail[tail] || { color: '#64748b' };
-        L.polyline(latLngs, {
+        const status = statusByTail[tail] || {
+          color: '#64748b'
+        };
+
+        const line = L.polyline(latLngs, {
           color: status.color,
           weight: 2,
           opacity: 0.75,
-          dashArray: '6, 8',
-          lineCap: 'round'
-        }).bindTooltip(tail + ' route', { sticky: true }).addTo(routeGroup);
+          dashArray: '6, 8'
+        });
+
+        line.bindTooltip(tail + ' route', {
+          sticky: true
+        });
+
+        line.addTo(routeGroup);
       });
     }
 
@@ -843,62 +906,131 @@
       const latestStatus = String(ac.latestStatusRawStatus || '');
       const onGround = ac.onGround === true;
 
-      if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) {
-        return { key: 'no-position', label: 'No usable position', color: '#64748b', className: 'no-position' };
-      }
       if (markerMode === 'LIVE_AIRBORNE') {
-        return { key: 'live', label: 'Live airborne', color: '#38bdf8', className: 'live' };
+        return {
+          key: 'live',
+          label: 'Live airborne',
+          color: '#38bdf8',
+          className: 'live'
+        };
       }
+
       if (onGround && latestStatus !== 'NO_SIGNAL' && latestStatus !== 'ERROR') {
-        return { key: 'ground', label: 'On ground', color: '#22c55e', className: 'ground' };
+        return {
+          key: 'ground',
+          label: 'On ground',
+          color: '#22c55e',
+          className: 'ground'
+        };
       }
+
       if (displayMode === 'SNAPPED_TO_NEAREST_AIRPORT') {
-        return { key: 'likely-landed', label: 'Likely landed near airport', color: '#f59e0b', className: 'likely-landed' };
+        return {
+          key: 'likely-landed',
+          label: 'Likely landed near airport',
+          color: '#f59e0b',
+          className: 'likely-landed'
+        };
       }
+
       if (latestStatus === 'NO_SIGNAL' || latestStatus === 'ERROR') {
-        return { key: 'signal-lost', label: 'Signal lost / last known', color: '#ef4444', className: 'signal-lost' };
+        return {
+          key: 'signal-lost',
+          label: 'Signal lost / last known',
+          color: '#ef4444',
+          className: 'signal-lost'
+        };
       }
-      return { key: 'last-known', label: 'Last known position', color: '#ef4444', className: 'last-known' };
+
+      if (!Number.isFinite(Number(ac.lat)) || !Number.isFinite(Number(ac.lon))) {
+        return {
+          key: 'no-position',
+          label: 'No usable position',
+          color: '#64748b',
+          className: 'no-position'
+        };
+      }
+
+      return {
+        key: 'last-known',
+        label: 'Last known position',
+        color: '#ef4444',
+        className: 'last-known'
+      };
     }
 
     function aircraftIcon(ac) {
       const status = getVisualStatus(ac);
       const color = status.color;
       const track = Number(ac.track || 0);
+
       const category = String(ac.category || '').toLowerCase();
-      const type = String(ac.type || '').toLowerCase();
 
       let icon = '✈';
-      if (category.includes('helicopter') || type.includes('heli')) {
+
+      if (category.includes('helicopter')) {
         icon = '🚁';
-      } else if (category.includes('turboprop') || type.includes('turbo') || type.includes('king air') || type.includes('pc-12')) {
+      } else if (category.includes('turboprop')) {
         icon = '🛩';
+      } else {
+        icon = '✈';
       }
 
-      const shouldRotate = ac.markerMode === 'LIVE_AIRBORNE' && Number.isFinite(track);
+      const shouldRotate =
+        ac.markerMode === 'LIVE_AIRBORNE' &&
+        Number.isFinite(track);
 
       return L.divIcon({
         html: `
           <div class="aircraft-marker-wrap">
-            <div class="aircraft-marker-icon ${status.className}" style="color:${color}; transform: rotate(${shouldRotate ? track : 0}deg);">${icon}</div>
-            <div class="aircraft-marker-label">${escapeHtml(ac.tail)}</div>
+            <div
+              class="aircraft-marker-icon ${status.className}"
+              style="
+                color:${color};
+                transform: rotate(${shouldRotate ? track : 0}deg);
+              "
+            >
+              ${icon}
+            </div>
+            <div class="aircraft-marker-label">
+              <div class="aircraft-marker-tail">
+                ${escapeHtml(ac.tail)}
+              </div>
+              <div class="aircraft-marker-company">
+                ${escapeHtml(ac.company || ac.group || ac.individual || '')}
+              </div>
+            </div>
           </div>
         `,
         className: '',
-        iconSize: [76, 58],
-        iconAnchor: [38, 29]
+        iconSize: [96, 66],
+        iconAnchor: [48, 33]
       });
     }
 
     function tooltipHtml(ac) {
       const status = getVisualStatus(ac);
-      return `<div style="font-size:12px; line-height:1.35;"><b>${escapeHtml(ac.tail)}</b><br>${escapeHtml(status.label)}<br>${escapeHtml(ac.positionTime || ac.fetchedAt || '-')}</div>`;
+
+      return `
+        <div style="font-size:12px; line-height:1.35;">
+          <b>${escapeHtml(ac.tail)}</b><br>
+          ${escapeHtml(ac.company || ac.group || ac.individual || '')}<br>
+          ${escapeHtml(status.label)}<br>
+          ${escapeHtml(ac.positionTime || ac.fetchedAt || '-')}
+        </div>
+      `;
     }
 
     function popupHtml(ac) {
       const status = getVisualStatus(ac);
+
       const snappedWarning = ac.displayMode === 'SNAPPED_TO_NEAREST_AIRPORT'
-        ? `<div class="warning">Marker snapped to nearest airport because latest ADS-B position is stale. Raw coordinate: ${escapeHtml(ac.rawLat)}, ${escapeHtml(ac.rawLon)}</div>`
+        ? `
+          <div class="warning">
+            Marker snapped to nearest airport because latest ADS-B position is stale.
+            Raw coordinate: ${escapeHtml(ac.rawLat)}, ${escapeHtml(ac.rawLon)}
+          </div>
+        `
         : '';
 
       return `
@@ -909,6 +1041,7 @@
           <b>Company:</b> ${escapeHtml(ac.company || '-')}<br>
           <b>Group:</b> ${escapeHtml(ac.group || '-')}<br>
           <b>Category:</b> ${escapeHtml(ac.category || '-')}<br>
+
           <div class="popup-section">
             <b>Callsign:</b> ${escapeHtml(ac.callsign || '-')}<br>
             <b>Type:</b> ${escapeHtml(ac.type || '-')}<br>
@@ -916,13 +1049,18 @@
             <b>Ground speed:</b> ${escapeHtml(ac.groundSpeed || '-')} kt<br>
             <b>Track:</b> ${escapeHtml(ac.track || '-')}°<br>
           </div>
+
           <div class="popup-section">
-            <b>Nearest airport:</b> ${escapeHtml(ac.nearestAirport || '-')}${ac.nearestAirportIcao ? '/' + escapeHtml(ac.nearestAirportIcao) : ''}${ac.nearestAirportDistanceNm ? ' (' + escapeHtml(ac.nearestAirportDistanceNm) + ' NM)' : ''}<br>
+            <b>Nearest airport:</b>
+              ${escapeHtml(ac.nearestAirport || '-')}
+              ${ac.nearestAirportIcao ? '/' + escapeHtml(ac.nearestAirportIcao) : ''}
+              ${ac.nearestAirportDistanceNm ? '(' + escapeHtml(ac.nearestAirportDistanceNm) + ' NM)' : ''}<br>
             <b>Position time:</b> ${escapeHtml(ac.positionTime || '-')}<br>
             <b>Updated:</b> ${escapeHtml(ac.fetchedAt || '-')}<br>
             <b>Display mode:</b> ${escapeHtml(ac.displayMode || '-')}<br>
             <b>Shown Lat/Lon:</b> ${escapeHtml(ac.lat)}, ${escapeHtml(ac.lon)}
           </div>
+
           ${snappedWarning}
         </div>
       `;
@@ -931,6 +1069,7 @@
     function cardHtml(ac) {
       const status = getVisualStatus(ac);
       const statusClass = 'status-' + status.key;
+
       return `
         <div class="card-top">
           <div>
@@ -940,18 +1079,34 @@
           </div>
           <div class="status ${statusClass}">${escapeHtml(status.label)}</div>
         </div>
+
         <div class="metric-grid">
-          <div class="metric"><div class="metric-label">Alt</div><div class="metric-value">${escapeHtml(ac.altitude || '-')}</div></div>
-          <div class="metric"><div class="metric-label">GS</div><div class="metric-value">${escapeHtml(ac.groundSpeed || '-')}</div></div>
-          <div class="metric"><div class="metric-label">Near</div><div class="metric-value">${escapeHtml(ac.nearestAirport || '-')}</div></div>
+          <div class="metric">
+            <div class="metric-label">Alt</div>
+            <div class="metric-value">${escapeHtml(ac.altitude || '-')}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">GS</div>
+            <div class="metric-value">${escapeHtml(ac.groundSpeed || '-')}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Near</div>
+            <div class="metric-value">${escapeHtml(ac.nearestAirport || '-')}</div>
+          </div>
         </div>
-        <div class="meta" style="margin-top:10px;">Position: ${escapeHtml(ac.positionTime || '-')}<br>Updated: ${escapeHtml(ac.fetchedAt || '-')}</div>
+
+        <div class="meta" style="margin-top:10px;">
+          Position: ${escapeHtml(ac.positionTime || '-')}<br>
+          Updated: ${escapeHtml(ac.fetchedAt || '-')}
+        </div>
       `;
     }
 
     function fitAllMarkers() {
       const layers = markerGroup.getLayers();
+
       if (!layers.length) return;
+
       map.fitBounds(markerGroup.getBounds().pad(0.18));
     }
 
@@ -981,8 +1136,8 @@
       return escapeHtml(value).replaceAll('`', '&#096;');
     }
 
-    loadAircraft(false);
-    setInterval(function() { loadAircraft(false); }, 60000);
+    loadAircraft();
+    setInterval(loadAircraft, 60000);
   </script>
 </body>
 </html>
